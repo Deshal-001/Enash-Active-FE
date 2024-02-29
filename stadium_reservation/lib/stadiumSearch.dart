@@ -26,14 +26,102 @@ class _StadiumsSearchPageState extends State<StadiumsSearchPage> {
   List<District> districts = [
     District.DISTRICT1,
     District.DISTRICT2,
-    // Add other districts here
+    District.DISTRICT3,
+    District.DISTRICT4,
+    District.DISTRICT5,
+    District.DISTRICT6,
+    District.DISTRICT7,
+    District.DISTRICT8,
+    District.DISTRICT9,
+    District.DISTRICT10,
+    District.DISTRICT11,
+    District.DISTRICT12,
+    District.DISTRICT13,
+    District.DISTRICT14,
+    District.DISTRICT15,
+    District.DISTRICT16,
+    District.DISTRICT17,
+    District.DISTRICT18,
+    District.DISTRICT19,
+    District.DISTRICT20,
+    District.DISTRICT21,
+    District.DISTRICT22,
+    District.DISTRICT23,
+    District.DISTRICT24,
+    District.DISTRICT25,
   ];
 
   List<City> cities = [
     City.CITY1,
     City.CITY2,
-    // Add other cities here
+    City.CITY3,
+    City.CITY4,
+    City.CITY5,
+    City.CITY6,
+    City.CITY7,
+    City.CITY8,
+    City.CITY9,
+    City.CITY10,
+    City.CITY11,
+    City.CITY12,
+    City.CITY13,
+    City.CITY14,
+    City.CITY15,
+    City.CITY16,
+    City.CITY17,
+    City.CITY18,
+    City.CITY19,
+    City.CITY20,
+    City.CITY21,
+    City.CITY22,
+    City.CITY23,
+    City.CITY24,
+    City.CITY25,
+    City.CITY26,
+    City.CITY27,
+    City.CITY28,
+    City.CITY29,
+    City.CITY30,
+    City.CITY31,
+    City.CITY32,
+    City.CITY33,
+    City.CITY34,
+    City.CITY35,
+    City.CITY36,
+    City.CITY37,
+    City.CITY38,
+    City.CITY39,
+    City.CITY40,
+    City.CITY41,
+    City.CITY42,
+    City.CITY43,
+    City.CITY44,
+    City.CITY45,
+    City.CITY46,
+    City.CITY47,
+    City.CITY48,
+    City.CITY49,
+    City.CITY50,
+    City.CITY51,
+    City.CITY52,
+    City.CITY53,
+    City.CITY54,
+    City.CITY55,
+    City.CITY56,
+    City.CITY57,
+    City.CITY58,
+    City.CITY59,
+    City.CITY60,
+    City.CITY61,
+    City.CITY62,
+    City.CITY63,
+    City.CITY64,
+    City.CITY65,
+    City.CITY66,
+    City.CITY67,
+    City.CITY68,
   ];
+
 
   Future<void> _selectDate(BuildContext context) async {
     DateTime? selectedDate = await showDatePicker(
@@ -61,13 +149,23 @@ class _StadiumsSearchPageState extends State<StadiumsSearchPage> {
       setState(() {
         if (isStartTime) {
           _selectedStartTime = selectedTime;
-          _startTimeController.text = selectedTime.format(context);
+          _startTimeController.text = _formatTime(selectedTime);
         } else {
           _selectedEndTime = selectedTime;
-          _endTimeController.text = selectedTime.format(context);
+          _endTimeController.text = _formatTime(selectedTime);
         }
       });
     }
+  }
+
+  String _formatTime(TimeOfDay time) {
+    String period = 'AM';
+    int hour = time.hour;
+    if (hour >= 12) {
+      period = 'PM';
+      if (hour > 12) hour -= 12; // Convert to 12-hour format
+    }
+    return '${hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')} $period';
   }
 
   void _showErrorDialog(BuildContext context, String message) {
@@ -91,9 +189,9 @@ class _StadiumsSearchPageState extends State<StadiumsSearchPage> {
   }
 
   Future<List<String>> _fetchNonBookingCourts(String startTime, String endTime, String date, List<String> excludedCourtIds) async {
-    final baseUrl = Uri.parse('http://localhost:8080/api/courts');
-    final url = Uri.parse('$baseUrl/except?excludedCourtIds=${excludedCourtIds.join(',')}');
-
+    final baseUrl = Uri.parse('http://localhost:8080/api/bookings/non-booking-courts');
+    final url = Uri.parse('$baseUrl?startTime=$startTime&endTime=$endTime&date=$date');
+    print(url);
     try {
       final response = await http.get(url);
       if (response.statusCode == 200) {
@@ -110,42 +208,42 @@ class _StadiumsSearchPageState extends State<StadiumsSearchPage> {
   Future<List<Stadium>> _fetchStadiums(List<String> courtIds) async {
     List<Stadium> stadiums = [];
 
-    // Iterate through courtIds and fetch stadium details for each court
-    for (String courtId in courtIds) {
-      try {
-        Stadium stadium = await _fetchStadiumDetails(courtId);
+    try {
+      List<dynamic> response = await _fetchStadiumDetails(courtIds);
+      for (var data in response) {
+        Stadium stadium = Stadium(
+          name: data['courtName'],
+          description: data['description'],
+          location: data['location'],
+          ordID: data['orgID'],
+          hourlyRate: data['hourlyRate'],
+          availability: data['availability'],
+        );
         stadiums.add(stadium);
-      } catch (e) {
-        print('Failed to fetch stadium details for court ID $courtId: $e');
       }
+    } catch (e) {
+      print('Failed to fetch stadium details: $e');
     }
 
     return stadiums;
   }
 
-  Future<Stadium> _fetchStadiumDetails(String courtId) async {
-    final baseUrl = Uri.parse('http://localhost:8080/api/courts');
-    final url = Uri.parse('$baseUrl/$courtId');
+  Future<List<dynamic>> _fetchStadiumDetails(List<String> courtIds) async {
+    final baseUrl = Uri.parse('http://localhost:8080/api/courts/except?excludedCourtIds=');
+    final url = baseUrl.replace(queryParameters: {'excludedCourtIds': courtIds.join(',')});
 
     try {
       final response = await http.get(url);
       if (response.statusCode == 200) {
-        Map<String, dynamic> data = jsonDecode(response.body);
-        return Stadium(
-          name: data['courtName'],
-          description: data['description'],
-          location: data['location'],
-          ordID: data['ordID'],
-          hourlyRate: data['hourlyRate'].toDouble(), availability: data['availability'],
-        );
+        List<dynamic> data = jsonDecode(response.body);
+        return data;
       } else {
-        throw Exception('Failed to fetch stadium details for court ID $courtId');
+        throw Exception('Failed to fetch stadium details for court IDs: $courtIds');
       }
     } catch (e) {
       throw Exception('Failed to fetch stadium details: $e');
     }
   }
-
 
   void _searchStadiums() async {
     if (_selectedDate == null ||
@@ -157,11 +255,10 @@ class _StadiumsSearchPageState extends State<StadiumsSearchPage> {
     } else {
       String startTime = _selectedStartTime!.format(context);
       String endTime = _selectedEndTime!.format(context);
-      String date = DateFormat('yyyy-MM-dd').format(_selectedDate!); // Format selected date
+      String date = DateFormat('yyyy-MM-dd').format(_selectedDate!);
 
       try {
-        List<String> excludedCourtIds = []; // Define excludedCourtIds here, or get it from somewhere
-        List<String> courtIds = await _fetchNonBookingCourts(startTime, endTime, date, excludedCourtIds); // Pass excludedCourtIds parameter
+        List<String> courtIds = await _fetchNonBookingCourts(startTime, endTime, date, []);
         List<Stadium> searchResults = await _fetchStadiums(courtIds);
 
         Navigator.push(
@@ -308,4 +405,3 @@ class _StadiumsSearchPageState extends State<StadiumsSearchPage> {
     );
   }
 }
-
