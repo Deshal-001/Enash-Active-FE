@@ -7,6 +7,7 @@ class Court {
   final String orgID;
   final BookingStatus bookingStatus;
   final double hourlyRate;
+  final String imageUrl;
 
   Court({
     required this.courtId,
@@ -17,6 +18,7 @@ class Court {
     required this.orgID,
     required this.bookingStatus,
     required this.hourlyRate,
+    required this.imageUrl
   });
 }
 
